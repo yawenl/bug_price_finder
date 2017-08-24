@@ -83,6 +83,7 @@ class DealmoonPriceFinder:
         for i in range( self.num_pages_to_detect ):
             t_url = self.home_url + "?p=" + str( i + 1 )
         
+
             html = urllib2.urlopen( t_url )
             soup = BeautifulSoup( html )
             
@@ -103,24 +104,33 @@ class DealmoonPriceFinder:
 
                 
                 # Get the title of the post
-                if link.string:
-                    title = link.string
-                else:
+                if link.string: # Case that the "title" of post is in the <a>
+                    title = set( link.string )
+                else: # Case that the title of post is in <span> section of the <a>
                     soup2 = BeautifulSoup( str(link) )
-                    span = soup2.find( "span" )
+                    spans = soup2.findAll( "span", text = True )
+                    # There might be multiple <span>, title, subtitle, etc
+                    # "text = True" means we only care about the text of the HTMl element.
                     
-                    try:
-                        title = re.search("<span>(.+)</span>", str(span) ).group(1)
-                    except:
-                        # this is not a text block. It may be a picture, video, or something else.
-                        continue
-
-
+                    if not spans: continue # we don't have any span property in <a>
                     
 
+                    titles = set()
+                    for _ in spans: 
+                        _ = _.strip().rstrip()
+                        if _ : titles.add( _ )
+
+
+                if len( titles ) == 0 : continue # no title find in this <a> href.
+
+                # Now, we have titles array (including title, subtitle, etc),
+                # we want combine everything into one string
+                title = ""
+                for _ in titles: title += _
                 title = title.lower()
                 title = ensure_unicode( title )
-                
+          
+
                 title_has_keywords = False
                 for k in self.keywords:
                     k = k.lower()
