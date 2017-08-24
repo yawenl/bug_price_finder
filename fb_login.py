@@ -1,28 +1,60 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import json
+
+
 from fbchat import Client
 from fbchat.models import *
-import sys
-receiver_ids = []
-#yawen_id = '100003776882239'
-#beibin_id = '100000279995429'
-login_id = ''
-login_pwd = ''
 
-def set_receiver_ids(receivers):
-	global receiver_ids
-	receiver_ids = receivers
-def login(id, pwd):
-	global login_id, login_pwd
-	login_id = id
-	login_pwd = pwd
-	client = Client(login_id, login_pwd)
+class FBManager():
+    
+    #### Memmber Variables
+    receiver_ids = []
+    login_id = ''
+    login_pwd = ''
+    session_cookies = {}
+    
+    
+    
+    #### Member Functions
+    def __init__( self, username, password ):
+        """
+        asdfassdfasdf only run this once, otherwies..... fb will.
+        """
+        self.login_id = username
+        self.login_pwd = password
+        
+        # Try to load session cookie
+        try:
+            self.session_cookies = json.load( open("session_cookie.json", "rb") )
+        except:
+            # Session Cookie doesn't exist
+            pass
+        
+        
+    def login( self ):
+        self.client = Client( self.login_id, self.login_pwd, session_cookies = self.session_cookies )
+        
+        # save login session as cookie if such cookie doesn't exists
+        if len( self.session_cookies ) == 0:
+            self.session_cookies = self.client.getSession()
+            f = open("session_cookie.json", "wb")
+            json.dump( self.session_cookies, f )
+            f.close()
+        
+        
 
-def send_message(message):
-	for r in receiver_ids:
-		client.sendMessage(massage, thread_id=r, thread_type=ThreadType.USER)
-
-print('Own id: {}'.format(client.uid))
-
-client.sendMessage('Hi me!', thread_id=yawen_id, thread_type=ThreadType.USER)
-client.sendMessage('SB!', thread_id=beibin_id, thread_type=ThreadType.USER)
-
-
+    
+    def set_receiver_ids(self, receivers):
+        """
+        setup FB accounts that want the deals messages sent to them
+        """
+        self.receiver_ids = receivers
+        
+        
+    def send_message(self, message):
+        """
+        Call API to send message
+        """
+        for r in self.receiver_ids:
+            self.client.sendMessage(message, thread_id=r, thread_type=ThreadType.USER)
