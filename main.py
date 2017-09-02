@@ -6,7 +6,7 @@ from dealmoon_bug_detector import DealmoonPost, DealmoonPriceFinder
 from fb_login import FBManager
 
 # Login Information
-f = open( "fb_login_info.txt", "rb" )
+f = open( "fb_login_info.txt", "r" )
 
 username = f.readline().strip().rstrip()
 password = f.readline().strip().rstrip()
@@ -28,22 +28,26 @@ finder = DealmoonPriceFinder( 2 )
 while True:
     finding_rst = finder.detect_prices()
     
-    print finding_rst
+    print(finding_rst)
     
     
     msg = ""
     for post in finding_rst:
-        msg += ( post.title + " : " + post.url + "\n" )
+        msg += str( post.title + " : " + post.url + "\n" )
+
+    # print( "msg", msg )
+
+    msg = str( msg )
         
     if len( msg ) > 0:
         fb.send_message( msg )
         
-    print "..."
+    print("...")
     time.sleep( 60 * 3 ) 
 
     
     
-print "All Done ~ Have a nice day!"
+print ("All Done ~ Have a nice day!")
     
 #%% debug code
 #count = 0

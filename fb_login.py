@@ -26,7 +26,7 @@ class FBManager():
         
         # Try to load session cookie
         try:
-            self.session_cookies = json.load( open("session_cookie.json", "rb") )
+            self.session_cookies = json.load( open("session_cookie.json", "r") )
         except:
             # Session Cookie doesn't exist
             pass
@@ -38,7 +38,7 @@ class FBManager():
         # save login session as cookie if such cookie doesn't exists
         if len( self.session_cookies ) == 0:
             self.session_cookies = self.client.getSession()
-            f = open("session_cookie.json", "wb")
+            f = open("session_cookie.json", "w")
             json.dump( self.session_cookies, f )
             f.close()
         

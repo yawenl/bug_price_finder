@@ -2,14 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urllib2
-from BeautifulSoup import BeautifulSoup
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
 
-def ensure_unicode(v):
-    if isinstance(v, str): v = v.decode('utf8')
-    return unicode(v)  # convert anything not a string to unicode too
-
-                    
 
 
 
@@ -22,9 +17,9 @@ class DealmoonPost:
         
     def __init__( self, id_, title_ ):
         self.id = id_
-        self.title = ensure_unicode( title_ )
+        self.title =  title_
         self.url = self.home_url  + str( self.id ) + ".html"
-        self.url = ensure_unicode( self.url )
+        self.url = self.url
         
 
         
@@ -33,7 +28,7 @@ class DealmoonPost:
 
         
     def __unicode__(self):
-        return self.title.encode('utf-8')  + " : " + self.url.encode('utf-8') 
+        return self.title  + " : " + self.url 
 
     
 
@@ -42,7 +37,7 @@ class DealmoonPost:
 class DealmoonPriceFinder:
     #%% ########################################## Member Constant ###################################
     home_url = "http://cn.dealmoon.com/"
-    keywords =  ["bug", "错误" , "买一送",  "买1送", "疑似" ]
+    keywords =  ["bug", "错误" , "买一送",  "买1送", "疑似", "史低" ]
     num_pages_to_detect = 5
     
     sent_posts = [] # posts that we already sent in the past
@@ -57,7 +52,7 @@ class DealmoonPriceFinder:
         
     def set_up_sent_posts( self ):
         try:
-            f = open("previous_posts.data", "rb")
+            f = open("previous_posts.data", "r")
         except: 
             return # databse doesn't exist. Ignore loading data.
         
@@ -66,8 +61,10 @@ class DealmoonPriceFinder:
         f.close()
         
     def write_existing_posts_to_database( self ):
-        f = open("previous_posts.data", "wb")
+        f = open("previous_posts.data", "w")
         for _ in self.sent_posts:
+            _ = str(_)
+            # print( "ID:", _, "Type:", type(_))
             f.write( _ + "\n" )
         f.close()
     
@@ -78,13 +75,13 @@ class DealmoonPriceFinder:
         """
         rst = []
         
-        print "\n\nBegin detecting price in", self.home_url, "now", "for", self.num_pages_to_detect, "pages"
+        print ("\n\nBegin detecting price in", self.home_url, "now", "for", self.num_pages_to_detect, "pages")
  
         for i in range( self.num_pages_to_detect ):
             t_url = self.home_url + "?p=" + str( i + 1 )
         
 
-            html = urllib2.urlopen( t_url )
+            html = urlopen( t_url )
             soup = BeautifulSoup( html )
             
             all_links = soup.findAll('a')
@@ -98,6 +95,7 @@ class DealmoonPriceFinder:
                 # Get the post id of the post
                 try:
                     id = re.search( "statistics.event_statistics_view\((\d+)", onclick ).group(1)
+                    # print( "ID:", id, "Type:", type(id))
                 except:
                     #  this is not a dealmoon post. it may be an ads or a link to wechat, etc
                     continue
@@ -114,10 +112,12 @@ class DealmoonPriceFinder:
                     
                     if not spans: continue # we don't have any span property in <a>
                     
-
+                    # print("spans",spans)
                     titles = set()
-                    for _ in spans: 
-                        _ = _.strip().rstrip()
+                    for _ in spans:
+                        # print( "TYPE:", type(_))
+                        if not _: continue 
+                        _ = _.text.strip().rstrip()
                         if _ : titles.add( _ )
 
 
@@ -128,21 +128,19 @@ class DealmoonPriceFinder:
                 title = ""
                 for _ in titles: title += _
                 title = title.lower()
-                title = ensure_unicode( title )
           
 
                 title_has_keywords = False
                 for k in self.keywords:
                     k = k.lower()
-                    k = ensure_unicode( k )
                     try:
                         if title.find( k ) >= 0:
                             title_has_keywords = True
                             break
                     except Exception as e:
-                        print e
-                        print title
-                        print k
+                        print (e)
+                        print (title)
+                        print (k)
                 
                 if title_has_keywords:
                     if id not in self.sent_posts:
@@ -153,6 +151,6 @@ class DealmoonPriceFinder:
   
         self.write_existing_posts_to_database()
         
-        print "Done detecting prices. There are", len(rst), "findings\n\n"
+        print ("Done detecting prices. There are", len(rst), "findings\n\n")
         return rst
     
